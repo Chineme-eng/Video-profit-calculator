@@ -437,6 +437,38 @@
     .muted { color: var(--muted); }
     .tiny { font-size: 0.84rem; }
 
+    .big {
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    .smart-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .smart-card {
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+    }
+
+    .smart-card .label {
+      color: var(--muted);
+      font-size: 0.88rem;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    .smart-card .big {
+      min-height: 2.8em;
+      display: flex;
+      align-items: center;
+    }
+
     .footer-space { height: 28px; }
 
     @media (max-width: 1100px) {
@@ -446,7 +478,8 @@
       }
 
       .cards-3,
-      .breakdown {
+      .breakdown,
+      .smart-grid {
         grid-template-columns: repeat(2, 1fr);
       }
     }
@@ -456,6 +489,7 @@
       .grid.two,
       .cards-3,
       .breakdown,
+      .smart-grid,
       .checkbox-row,
       .hero-grid {
         grid-template-columns: 1fr;
@@ -491,7 +525,7 @@
     <section class="hero">
       <div class="hero-card">
         <div>
-          <div class="eyebrow">25 features • all 3 versions combined</div>
+          <div class="eyebrow">Personal creator earnings simulator</div>
           <h1>Estimate what a piece of content could be worth across platforms.</h1>
           <p>
             Pick a platform, choose your niche, enter views and followers, switch monetization models,
@@ -525,9 +559,9 @@
         <div class="panel-header">
           <div>
             <h2>Inputs & Controls</h2>
-            <div class="muted tiny">Core, advanced, and power features</div>
+            <div class="muted tiny">Adjust assumptions and estimate payout ranges</div>
           </div>
-          <span class="pill">V1 + V2 + V3</span>
+          <span class="pill">Local only</span>
         </div>
         <div class="panel-body grid">
           <div class="field">
@@ -628,7 +662,7 @@
             <label>21. Editable Backend Values</label>
             <div class="checkbox-row">
               <label class="chip-check"><input type="checkbox" id="enableCustomRates" /> Enable custom rates</label>
-              <label class="chip-check"><input type="checkbox" id="showFeatureMap" checked /> Show 25 features map</label>
+              
             </div>
           </div>
 
@@ -714,6 +748,36 @@
                 <div class="money-title">High Estimate</div>
                 <div class="money-value" id="highOut">$0</div>
                 <div class="money-sub">Strong outcome</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Smart Insights</h2>
+              <div class="muted tiny">Decision signals beyond the raw payout</div>
+            </div>
+            <span class="pill">Actionable</span>
+          </div>
+          <div class="panel-body">
+            <div class="smart-grid">
+              <div class="smart-card">
+                <div class="label">Content Value Score</div>
+                <div id="valueScore" class="big">0/100</div>
+              </div>
+              <div class="smart-card">
+                <div class="label">Platform Risk</div>
+                <div id="riskMeter" class="big">—</div>
+              </div>
+              <div class="smart-card">
+                <div class="label">Time to Earn</div>
+                <div id="timeToEarn" class="big">—</div>
+              </div>
+              <div class="smart-card">
+                <div class="label">Best Move Right Now</div>
+                <div id="bestMove" class="big">—</div>
               </div>
             </div>
           </div>
@@ -847,19 +911,6 @@
           </div>
           <div class="panel-body">
             <div class="notes-list" id="realityList"></div>
-          </div>
-        </div>
-
-        <div class="panel" id="featureMapPanel">
-          <div class="panel-header">
-            <div>
-              <h2>25 Features Included</h2>
-              <div class="muted tiny">Mapped to the interface</div>
-            </div>
-            <span class="pill">24. Viral mode active too</span>
-          </div>
-          <div class="panel-body">
-            <div class="feature-list" id="featureList"></div>
           </div>
         </div>
       </section>
@@ -1076,34 +1127,6 @@
       diy: 0.95
     };
 
-    const featureMap = [
-      '1. Platform selector',
-      '2. Content type selector',
-      '3. Niche selector',
-      '4. Views input',
-      '5. Followers/subscribers input',
-      '6. Low / expected / high earnings output',
-      '7. Revenue breakdown',
-      '8. Platform-based calculation engine',
-      '9. Niche multiplier system',
-      '10. Range generator',
-      '11. Audience location selector',
-      '12. Engagement rate input',
-      '13. Monetization mode toggle',
-      '14. Upload frequency and monthly projection',
-      '15. Side-by-side platform comparison',
-      '16. Best platform recommendation',
-      '17. Reality check section',
-      '18. Effort vs reward meter',
-      '19. Content strategy suggestion',
-      '20. Save profiles',
-      '21. Editable backend values',
-      '22. Scenario simulator',
-      '23. Goal mode',
-      '24. Viral spike mode',
-      '25. Clean dashboard UI'
-    ];
-
     const el = id => document.getElementById(id);
 
     let monetizationMode = 'ads';
@@ -1255,15 +1278,34 @@
       }).sort((a, b) => b.mid - a.mid);
     }
 
-    function renderFeatureMap() {
-      const list = el('featureList');
-      list.innerHTML = '';
-      featureMap.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'feature-item';
-        div.innerHTML = `<strong>${item}</strong><div class="muted tiny">Included in this single-file build.</div>`;
-        list.appendChild(div);
-      });
+    function calculateSmartInsights(result, comparison, state) {
+      const moneyScore = Math.min(100, result.mid / 10);
+      const growthScore = result.growth * 10;
+      const stabilityScore = result.stability * 10;
+      const valueScore = Math.round((moneyScore * 0.4) + (growthScore * 0.3) + (stabilityScore * 0.3));
+
+      let risk = '🟡 Medium';
+      if (result.stability >= 8) risk = '🟢 Stable';
+      if (result.stability <= 4) risk = '🔴 Risky';
+
+      let time = 'Moderate';
+      if (result.platform.category === 'rpm') time = 'Slow but compounding';
+      if (result.platform.category === 'bonus') time = 'Fast but inconsistent';
+      if (result.platform.category === 'sponsor') time = 'Depends on brand deals';
+      if (result.platform.category === 'community') time = 'Builds with loyal audience';
+
+      const bestMoney = comparison[0];
+      const bestGrowth = [...comparison].sort((a, b) => b.growth - a.growth)[0];
+      let move = '';
+      if (bestMoney.platform.name !== result.platform.name) {
+        move = `Switch focus to ${bestMoney.platform.name} for stronger earnings`;
+      } else if (bestGrowth.platform.name !== result.platform.name) {
+        move = `Keep this as money-first and use ${bestGrowth.platform.name} for growth`;
+      } else {
+        move = 'Stay consistent here and keep refining this format';
+      }
+
+      return { valueScore, risk, time, move };
     }
 
     function renderAll() {
@@ -1291,6 +1333,12 @@
       el('heroMid').textContent = formatMoney(result.mid);
       el('heroMonthly').textContent = formatMoney(result.monthlyMid);
 
+      const insights = calculateSmartInsights(result, comparison, state);
+      el('valueScore').textContent = `${insights.valueScore}/100`;
+      el('riskMeter').textContent = insights.risk;
+      el('timeToEarn').textContent = insights.time;
+      el('bestMove').textContent = insights.move;
+
       renderBestPlatforms(comparison);
       renderEffort(result, state);
       renderMonthly(result);
@@ -1300,7 +1348,6 @@
       renderGoal(goalIncome, requiredPosts, requiredViews, goalEstimate);
       renderReality(result, state);
 
-      el('featureMapPanel').style.display = el('showFeatureMap').checked ? 'block' : 'none';
     }
 
     function renderBestPlatforms(comparison) {
@@ -1400,7 +1447,7 @@
       [
         'platform','contentType','niche','views','followers','audienceTier','engagement','frequency',
         'ctr','conversion','commission','sponsorRate','enableCustomRates','customLow','customHigh',
-        'scenarioViews','scenarioFollowers','goalIncome','goalPlatform','viralMultiplier','showFeatureMap'
+        'scenarioViews','scenarioFollowers','goalIncome','goalPlatform','viralMultiplier'
       ].forEach(id => {
         el(id).addEventListener('input', () => {
           if (id === 'platform') syncPlatformDefaults();
@@ -1522,10 +1569,8 @@
     populateSelects();
     initTheme();
     syncPlatformDefaults();
-    renderFeatureMap();
     bindEvents();
     renderAll();
   </script>
 </body>
 </html>
-
