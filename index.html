@@ -1161,6 +1161,53 @@ body.dark .advice-icon.info { background: #1C252C; }
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* ─── FLOATING THEME TOGGLE ─── */
+.theme-toggle {
+  position: fixed;
+  bottom: 2rem;
+  left: 2rem;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--white);
+  border: 1px solid var(--cream-dark);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  cursor: pointer;
+  z-index: 999;
+  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.theme-toggle:hover {
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--orange);
+}
+
+/* Adjust dark mode colors for the toggle itself */
+body.dark .theme-toggle {
+  background: #241F1A;
+  border-color: #3C342C;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+body.dark .theme-toggle:hover {
+  border-color: var(--orange-warm);
+}
+
+/* Push it up on mobile so it doesn't hide behind the bottom nav */
+@media (max-width: 640px) {
+  .theme-toggle {
+    bottom: calc(70px + 1rem);
+    left: 1rem;
+    width: 44px;
+    height: 44px;
+  }
+}
+  
 /* ─── RESPONSIVE ─── */
 @media (max-width: 900px) {
   .calc-layout { grid-template-columns: 1fr; }
@@ -1250,10 +1297,9 @@ body.dark .advice-icon.info { background: #1C252C; }
     <div class="nav-tab" onclick="showPage('tools')">Tools</div>
   </nav>
 </div>
-      <div style="display:flex;gap:0.5rem;align-items:center;">
-        <button class="btn btn-ghost" onclick="toggleDark()" style="padding:0.5rem 0.8rem;">🌙</button>
-        <button class="btn btn-primary" onclick="exportPDF()">↓ Export</button>
-      </div>
+       <div style="display:flex;gap:0.5rem;align-items:center;">
+         <button class="btn btn-primary" onclick="exportPDF()">↓ Export</button>
+       </div>
     </div>
   </div>
 </header>
@@ -1989,7 +2035,9 @@ body.dark .advice-icon.info { background: #1C252C; }
 </nav>
 
 </div><!-- end app -->
-
+<button class="theme-toggle" onclick="toggleDark()" aria-label="Toggle Dark Mode">
+  🌙
+</button>
 <script>
 // ════════════════════════════════════════════════════════
 // DATA
