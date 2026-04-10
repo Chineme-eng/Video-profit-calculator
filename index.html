@@ -1078,6 +1078,50 @@ body.dark {
 
 body.dark .header { background: rgba(26,23,20,0.92); }
 body.dark .results-card { background: #0E0C0A; }
+body.dark .chart-card,
+body.dark .tool-card,
+body.dark .goal-card,
+body.dark .advice-card,
+body.dark .comparison-table-wrap,
+body.dark .mobile-nav { background: var(--white); }
+body.dark .comp-table th { background: #120F0C; }
+body.dark .comp-table tr:hover td { background: #2B261F; }
+body.dark .comp-table tr.best-row td { background: #322317; }
+body.dark .metric-box,
+body.dark .rpm-box,
+body.dark .rc-item { border: 1px solid rgba(255,255,255,0.06); }
+body.dark .heatmap-label,
+body.dark .tool-sub,
+body.dark .toggle-desc,
+body.dark .goal-result,
+body.dark .advice-text,
+body.dark .hero-left p,
+body.dark .hero-stat-label,
+body.dark .brand-tag,
+body.dark .chart-title + p { color: #B8ACA0; }
+body.dark .header-nav { background: #241F1A; border-color: #3C342C; }
+body.dark .nav-tab.active { background: #312A22; color: var(--ink); }
+body.dark .btn-secondary { background: #241F1A; }
+body.dark .btn-secondary:hover { background: #2D271F; }
+body.dark .btn-ghost { color: #D2C6BA; border-color: #4A4036; }
+body.dark .btn-ghost:hover { color: #FFF3E8; border-color: #6B5A4A; }
+body.dark .goal-input-row,
+body.dark .cost-input-inner,
+body.dark .styled-select,
+body.dark .niche-search input { background: #201B17; color: var(--ink); border-color: #433A31; }
+body.dark .cost-prefix { background: #2C2016; border-right-color: #433A31; }
+body.dark .toggle-slider { background: #4A4138; }
+body.dark .mob-nav-btn.active { background: #312317; }
+body.dark .score-item { border-bottom-color: #3A322A; }
+body.dark .advice-icon.warn { background: #3A2918; }
+body.dark .advice-icon.tip { background: #1D2C24; }
+body.dark .advice-icon.info { background: #1C252C; }
+
+.page-animate { animation: pageFadeIn 0.32s ease; }
+@keyframes pageFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 /* ─── RESPONSIVE ─── */
 @media (max-width: 900px) {
@@ -2464,6 +2508,17 @@ function renderRadar(rows) {
 // CHARTS
 // ════════════════════════════════════════════════════════
 let pieInst=null, waterfallInst=null, growthInst=null, nicheInst=null;
+const chartAnimated = { pie:false, waterfall:false, growth:false, niche:false };
+
+function isDarkMode() {
+  return document.body.classList.contains('dark');
+}
+
+function chartTheme() {
+  return isDarkMode()
+    ? { text:'#EADFD3', muted:'#B8ACA0', grid:'rgba(255,255,255,0.08)', border:'#2B241D', ring:'rgba(255,255,255,0.10)' }
+    : { text:'#1C1814', muted:'#6B6158', grid:'rgba(0,0,0,0.04)', border:'#FFFFFF', ring:'rgba(0,0,0,0.06)' };
+}
 
 function renderCharts() {
   renderPie();
@@ -2477,26 +2532,32 @@ function renderPie() {
   const ctx = document.getElementById('pieChart');
   if (!ctx) return;
   const bd = S.lastCalc.breakdown || [];
+  const theme = chartTheme();
   if (pieInst) pieInst.destroy();
   if (!bd.length) return;
   pieInst = new Chart(ctx, {
     type:'doughnut',
     data:{
       labels: bd.map(b=>b.name),
-      datasets:[{ data: bd.map(b=>b.val), backgroundColor: BD_COLORS.slice(0,bd.length), borderWidth:2, borderColor:'#fff' }]
+      datasets:[{ data: bd.map(b=>b.val), backgroundColor: BD_COLORS.slice(0,bd.length), borderWidth:2, borderColor:theme.border }]
     },
     options:{
       responsive:true, maintainAspectRatio:false,
-      animation:false,
-      plugins:{ legend:{ position:'right', labels:{ font:{size:11}, boxWidth:12 } } },
+      animation: chartAnimated.pie ? false : { duration: 650, easing: 'easeOutQuart' },
+      plugins:{
+        legend:{ position:'right', labels:{ font:{size:11}, boxWidth:12, color:theme.text } },
+        tooltip:{ callbacks:{ label: ctx => `${ctx.label}: ${fmtM(ctx.raw)}` } }
+      },
       cutout:'62%'
     }
   });
+  chartAnimated.pie = true;
 }
 
 function renderWaterfall() {
   const ctx = document.getElementById('waterfallChart');
   if (!ctx) return;
+  const theme = chartTheme();
   if (waterfallInst) waterfallInst.destroy();
   const gross = (S.lastCalc.total||0) * S.posts;
   const platCut = gross * (1 - (PLATFORMS[S.platform].adShare || 0.55)) * 0.4;
@@ -2522,14 +2583,18 @@ function renderWaterfall() {
     },
     options:{
       responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false} },
-      animation:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{ callbacks:{ label: ctx => `${ctx.label}: ${fmtM(ctx.raw)}` } }
+      },
+      animation: chartAnimated.waterfall ? false : { duration: 650, easing: 'easeOutQuart' },
       scales:{
-        y:{ grid:{color:'rgba(0,0,0,0.04)'}, ticks:{ callback: v => '$'+Math.abs(v).toLocaleString() } },
-        x:{ grid:{display:false} }
+        y:{ grid:{color:theme.grid}, ticks:{ color:theme.muted, callback: v => '$'+Math.abs(v).toLocaleString() } },
+        x:{ grid:{display:false}, ticks:{ color:theme.muted } }
       }
     }
   });
+  chartAnimated.waterfall = true;
 }
 
 function updateGrowthLabel() {
@@ -2539,6 +2604,7 @@ function updateGrowthLabel() {
 function renderGrowth() {
   const ctx = document.getElementById('growthChart');
   if (!ctx) return;
+  const theme = chartTheme();
   if (growthInst) growthInst.destroy();
   const rate = (parseFloat(document.getElementById('growthRate')?.value) || 8) / 100;
   const months = Array.from({length:13},(_,i)=>i);
@@ -2558,14 +2624,18 @@ function renderGrowth() {
     },
     options:{
       responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{ position:'top', labels:{ font:{size:11}, boxWidth:12 } } },
-      animation:false,
+      plugins:{
+        legend:{ position:'top', labels:{ font:{size:11}, boxWidth:12, color:theme.text } },
+        tooltip:{ callbacks:{ label: ctx => `${ctx.dataset.label}: ${fmtM(ctx.raw)}` } }
+      },
+      animation: chartAnimated.growth ? false : { duration: 800, easing: 'easeOutQuart' },
       scales:{
-        y:{ grid:{color:'rgba(0,0,0,0.04)'}, ticks:{ callback: v => '$'+v.toLocaleString('en-US',{maximumFractionDigits:0}) } },
-        x:{ grid:{display:false} }
+        y:{ grid:{color:theme.grid}, ticks:{ color:theme.muted, callback: v => '$'+v.toLocaleString('en-US',{maximumFractionDigits:0}) } },
+        x:{ grid:{display:false}, ticks:{ color:theme.muted } }
       }
     }
   });
+  chartAnimated.growth = true;
 }
 
 function buildHeatmap() {
@@ -2589,6 +2659,7 @@ function buildHeatmap() {
 function renderNicheChart() {
   const ctx = document.getElementById('nicheChart');
   if (!ctx) return;
+  const theme = chartTheme();
   if (nicheInst) nicheInst.destroy();
   const allNiches = Object.values(NICHE_DATA).flat().sort((a,b)=>b.rpm-a.rpm).slice(0,15);
   nicheInst = new Chart(ctx, {
@@ -2599,20 +2670,43 @@ function renderNicheChart() {
         label:'Base RPM ($)',
         data: allNiches.map(n=>n.rpm),
         backgroundColor: allNiches.map(n => n.name === S.niche ? '#E2620A' : 'rgba(107,155,130,0.65)'),
-        borderRadius:5
+        borderRadius:5,
+        hoverBackgroundColor: allNiches.map(n => n.name === S.niche ? '#F07830' : 'rgba(107,155,130,0.88)')
       }]
     },
     options:{
       indexAxis:'y',
       responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false} },
-      animation:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          displayColors:false,
+          backgroundColor:isDarkMode() ? '#120F0C' : '#1C1814',
+          titleColor:'#FFF7F0',
+          bodyColor:'#FFF7F0',
+          callbacks:{
+            title(items){
+              const idx = items[0]?.dataIndex ?? 0;
+              return allNiches[idx]?.name || items[0]?.label || '';
+            },
+            label(ctx){
+              return `Exact base RPM: ${fmtM(ctx.raw)}`;
+            },
+            afterLabel(ctx){
+              const idx = ctx.dataIndex;
+              return allNiches[idx]?.name === S.niche ? 'This is your selected niche.' : '';
+            }
+          }
+        }
+      },
+      animation: chartAnimated.niche ? false : { duration: 700, easing: 'easeOutQuart' },
       scales:{
-        x:{ grid:{color:'rgba(0,0,0,0.04)'}, ticks:{ callback: v => '$'+v } },
-        y:{ grid:{display:false}, ticks:{ font:{size:10} } }
+        x:{ grid:{color:theme.grid}, ticks:{ color:theme.muted, callback: v => '$'+v } },
+        y:{ grid:{display:false}, ticks:{ color:theme.text, font:{size:10} } }
       }
     }
   });
+  chartAnimated.niche = true;
 }
 
 function renderDivGrade() {
@@ -2631,7 +2725,7 @@ function renderDivGrade() {
     <div class="score-ring-wrap">
       <div class="score-ring">
         <svg width="90" height="90">
-          <circle cx="45" cy="45" r="36" fill="none" stroke="rgba(0,0,0,0.06)" stroke-width="8"/>
+          <circle cx="45" cy="45" r="36" fill="none" stroke="${chartTheme().ring}" stroke-width="8"/>
           <circle cx="45" cy="45" r="36" fill="none" stroke="${colors[grade]}" stroke-width="8"
             stroke-dasharray="${2*Math.PI*36}" stroke-dashoffset="${2*Math.PI*36*(1-pct/100)}"
             stroke-linecap="round"/>
@@ -2640,11 +2734,11 @@ function renderDivGrade() {
       </div>
       <div>
         <div style="font-weight:600;margin-bottom:0.3rem;">${count} of ${total} streams active</div>
-        <div style="font-size:0.8rem;color:var(--ink-muted);line-height:1.5;">${desc[grade]}</div>
+        <div style="font-size:0.82rem;color:var(--ink-muted);line-height:1.65;">${desc[grade]}</div>
       </div>
     </div>
     ${Object.entries(S.streams).map(([k,v]) => `
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:0.45rem 0;border-bottom:1px solid var(--cream-mid);font-size:0.8rem;">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:0.62rem 0;border-bottom:1px solid var(--cream-mid);font-size:0.82rem;">
         <span>${k.charAt(0).toUpperCase()+k.slice(1)}</span>
         <span style="color:${v?'var(--sage)':'var(--ink-muted)'};">${v?'✓ Active':'✗ Off'}</span>
       </div>`).join('')}
@@ -2856,13 +2950,21 @@ function renderRoadmap() {
 // NAVIGATION & UTILS
 // ════════════════════════════════════════════════════════
 function showPage(id) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.page').forEach(p => {
+    p.classList.remove('active');
+    p.classList.remove('page-animate');
+  });
+  const targetPage = document.getElementById('page-'+id);
+  targetPage.classList.add('active');
   document.querySelectorAll('.nav-tab').forEach((t,i) => {
     t.classList.toggle('active', ['calculator','comparison','charts','tools'][i]===id);
   });
   if (id==='comparison') renderComparison();
-  if (id==='charts') { renderCharts(); buildHeatmap(); }
+  if (id==='charts') {
+    targetPage.classList.add('page-animate');
+    renderCharts();
+    buildHeatmap();
+  }
   if (id==='tools') renderTools();
 }
 
@@ -2873,6 +2975,11 @@ function setMobActive(el) {
 
 function toggleDark() {
   document.body.classList.toggle('dark');
+  if (document.getElementById('page-charts')?.classList.contains('active')) {
+    renderCharts();
+    buildHeatmap();
+  }
+  if (document.getElementById('page-comparison')?.classList.contains('active')) renderComparison();
 }
 
 function exportPDF() {
